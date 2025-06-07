@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { useEffect } from "react";
 import L from "leaflet";
@@ -48,10 +48,27 @@ interface LocationMapProps {
   savedLocations: Location[];
 }
 
+// Component to handle map view updates when location changes
+function MapViewController({ currentLocation }: { currentLocation: CurrentLocation | null }) {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (currentLocation) {
+      // Smoothly pan and zoom to the new location
+      map.setView([currentLocation.latitude, currentLocation.longitude], 15, {
+        animate: true,
+        duration: 1.5
+      });
+    }
+  }, [currentLocation, map]);
+  
+  return null;
+}
+
 export default function LocationMap({ currentLocation, savedLocations }: LocationMapProps) {
-  // Default map center (San Francisco) - used when no location is available
-  const defaultCenter: [number, number] = [37.7749, -122.4194];
-  const defaultZoom = 13;
+  // Default map center (India) - closer to your actual location
+  const defaultCenter: [number, number] = [20.5937, 78.9629];
+  const defaultZoom = 5;
 
   // Determine map center and zoom based on available locations
   const mapCenter: [number, number] = currentLocation 
@@ -89,6 +106,9 @@ export default function LocationMap({ currentLocation, savedLocations }: Locatio
         zoomControl={true}
         scrollWheelZoom={true}
       >
+        {/* Component to handle automatic map view updates */}
+        <MapViewController currentLocation={currentLocation} />
+        
         {/* Base map tiles from OpenStreetMap */}
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
