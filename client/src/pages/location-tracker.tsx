@@ -224,7 +224,6 @@ export default function LocationTracker() {
               </div>
               <div>
                 <h1 className="text-xl font-medium text-text-primary">Location Tracker</h1>
-                <p className="text-sm text-text-secondary">Learn React Development</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
