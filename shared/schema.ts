@@ -1,4 +1,5 @@
 import { pgTable, text, serial, real, timestamp } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -18,6 +19,18 @@ export const locations = pgTable("locations", {
   accuracy: real("accuracy"), // GPS accuracy in meters
   timestamp: timestamp("timestamp").notNull().defaultNow(), // When location was recorded
 });
+
+// Define table relations for Drizzle ORM
+export const usersRelations = relations(users, ({ many }) => ({
+  locations: many(locations),
+}));
+
+export const locationsRelations = relations(locations, ({ one }) => ({
+  user: one(users, {
+    fields: [locations.id],
+    references: [users.id],
+  }),
+}));
 
 // Schema for inserting new locations (excludes auto-generated fields)
 export const insertLocationSchema = createInsertSchema(locations).omit({

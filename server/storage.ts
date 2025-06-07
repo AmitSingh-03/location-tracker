@@ -1,4 +1,6 @@
 import { users, locations, type User, type InsertUser, type Location, type InsertLocation } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 // Storage interface defining all CRUD operations needed for our app
 export interface IStorage {
@@ -66,6 +68,7 @@ export class MemStorage implements IStorage {
       ...insertLocation,
       id,
       timestamp: new Date(),
+      accuracy: insertLocation.accuracy ?? null,
     };
     this.locations.set(id, location);
     return location;
@@ -81,4 +84,55 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Database storage implementation using PostgreSQL
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async getAllLocations(): Promise<Location[]> {
+    return await db.select().from(locations).orderBy(locations.timestamp);
+  }
+
+  async getLocation(id: number): Promise<Location | undefined> {
+    const [location] = await db.select().from(locations).where(eq(locations.id, id));
+    return location || undefined;
+  }
+
+  async createLocation(insertLocation: InsertLocation): Promise<Location> {
+    const [location] = await db
+      .insert(locations)
+      .values({
+        ...insertLocation,
+        accuracy: insertLocation.accuracy ?? null,
+      })
+      .returning();
+    return location;
+  }
+
+  async deleteLocation(id: number): Promise<boolean> {
+    const result = await db.delete(locations).where(eq(locations.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async clearAllLocations(): Promise<boolean> {
+    await db.delete(locations);
+    return true;
+  }
+}
+
+export const storage = new DatabaseStorage();
